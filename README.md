@@ -24,7 +24,7 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
 - Úlohy se dělí na povinné a bonusové. Povinné úlohy musejí být splněny alespoň za 5 bodů (tj. 50 %). 
 - **Odevzdání úlohy po termínu je penalizováno odečtením 5 bodů!**
 - Bonusové úlohy deadline nemají.
-- Kopírování kódu bude penalizováno odečtením 1 bodu oběma odevzdávajícím, tedy i originálu, a to i opakovaně. Pokud např. budou odevzdány 3 kopie z jednoho zdroje, každé z nich bude odečten 1 bod a "zdroji" dokonce 3 body! Rozmyslete si tedy pořádně, zdali vypustíte svoje řešení úlohy "do světa".
+- Kopírování kódu bude penalizováno odečtením 1 bodu oběma odevzdávajícím, tedy i originálu, a to i opakovaně. Pokud např. budou odevzdány 3 stejné kopie jednoho kódu, každé z nich budou odečteny 2 body! Rozmyslete si tedy pořádně, zdali vypustíte svoje řešení úlohy "do světa".
 - Zcela či z podstatné části zkopírovaná úloha nebude uznána vůbec.
 
 ### 1. Lineární klasifikace
@@ -35,3 +35,20 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
   - SVM: 3 body
     - Validační skóre > 30 %: +1 bod
 - **deadline: 20.2.2019 7:59**
+
+### 2. Vícevrstvý perceptron
+- Notebook: [multilayer-perceptron.ipynb](multilayer-perceptron.ipynb)
+- Bodování:
+  - Dvouvrstvý perceptron: 4 body
+  - Kromě sigmoid i ReLU: 2 body
+  - Validační skóre < 20 %: 0 bodů
+  - Validační skóre > 30 %: 2 body
+  - Validační skóre > 40 %: 4 body
+- **deadline: 27.2.2019 7:59**
+
+### BONUS: Vícevrstvý perceptron
+- Notebook: [multilayer-perceptron.ipynb](multilayer-perceptron.ipynb)
+- Úkolem je rozšířit notebook o implementaci konfigurovatelného modelu s libovolným počtem vrstev.
+- Bodování:
+  - Obecná feed-forward síť: 6 bodů
+  - Skóre > 50 %: 4 body
