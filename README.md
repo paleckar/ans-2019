@@ -44,7 +44,7 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
   - Validační skóre < 20 %: 0 bodů
   - Validační skóre > 30 %: 2 body
   - Validační skóre > 40 %: 4 body
-- **deadline: 27.2.2019 7:59**
+- **deadline: 20.3.2019 7:59**
 
 ### BONUS: Vícevrstvý perceptron
 - Notebook: [multilayer-perceptron.ipynb](multilayer-perceptron.ipynb)
@@ -59,10 +59,10 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
   - konvoluce po kanálech: 2 body
   - více filtrů najednou: 3 body
   - konvoluce jako vrstva: 5 bodů
-- **deadline: 6.3.2019 7:59**
+- **deadline: 20.3.2019 7:59**
 
 ### 4. Klasifikace obrázků konvolučními sítěmi
-- Notebook: [conv-classification](conv-classification.ipynb)
+- Notebook: [conv-classification.ipynb](conv-classification.ipynb)
 - Bodování:
   - Validační skóre < 70 %: 0 bodů
   - Validační skóre > 70 %: 5 bodů
