@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
+from torch.nn import functional as F
+from torchvision import transforms
 from tqdm.auto import tqdm
 from IPython.core.debugger import set_trace
 
@@ -180,16 +182,23 @@ class Stats(object):
         if ax is None:
             fig, ax = plt.subplots()
         
-        yleft = [v for i, ep in enumerate(self._epochs) for v in ep[subset][left_metric]] if left_metric is not None else None
-        yright = [v for i, ep in enumerate(self._epochs) for v in ep[subset][right_metric]] if right_metric is not None else None
-        xdata = 1 + np.arange(max(len(yleft) if yleft is not None else 0, len(yright) if yright is not None else 0))
+        yleft = None
+        if left_metric is not None:
+            yleft = [v for i, ep in enumerate(self._epochs) for v in ep[subset][left_metric]]
+        yright = None
+        if right_metric is not None:
+            yright = [v for i, ep in enumerate(self._epochs) for v in ep[subset][right_metric]]
+        len_fn = lambda x: len(x) if x is not None else 0
+        xdata = 1 + np.arange(max(len_fn(yleft), len_fn(yright)))
 
         if block_len is not None:
-            yleft = np.mean(np.reshape(yleft[:block_len * (len(yleft) // block_len)], (-1, block_len)), axis=1)
-            yright = np.mean(np.reshape(yright[:block_len * (len(yright) // block_len)], (-1, block_len)), axis=1)
+            if yleft is not None:
+                yleft = [np.mean(np.reshape(yleft[:block_len * (len(yleft) // block_len)], (-1, block_len)), axis=1)]
+            if yright is not None:
+                yright = [np.mean(np.reshape(yright[:block_len * (len(yright) // block_len)], (-1, block_len)), axis=1)]
             xdata = xdata[len(xdata) % block_len : : block_len]
 
-        self._plot(xdata, [yleft], [yright], ax=ax, xlabel='batch')
+        self._plot(xdata, yleft, yright, ax=ax, xlabel='batch')
     
     def plot_by_epoch(self, ax=None, subsets=('train', 'valid'), left_metric='loss', right_metric='acc'):
         if ax is None:
@@ -277,6 +286,97 @@ def validate(model, crit, loader, stats):
         )
 
 
+def train_pytorch(model, crit, loader, optimizer, stats, on_batch_end=None):
+    """
+    Trenovani modelu v PyTorch.
+
+    vstupy:
+        model ... objekt tridy torch.nn.Module
+        crit ... objekt tridy nn.Module, jehoz dopredny pruchod ma za vysledek skalar
+        loader ... objekt tridy torch.utils.data.DataLoader nacistajici data po davkach
+        optimizer ... objekt tridy torch.optim.Optimizer, ktery po zavolani metody step updatuje parametry modelu
+        stats ... objekt typu ans.Stats
+        on_batch_end ... callback, ktery se zavola vzdy na konci zpracovani davky
+    """
+
+    # prepnout model do trenovaciho rezimu
+    model.train()
+
+    pb = tqdm(loader, desc='epoch {:02d} train'.format(len(stats)))
+    for X_batch, y_batch in pb:
+        # pokud je model na GPU, data take na GPU
+        device = next(model.parameters()).device
+        X_batch = X_batch.to(device)
+        y_batch = y_batch.to(device)
+
+        # dopredny pruchod
+        score = model(X_batch)
+        
+        # loss
+        loss = crit(score, y_batch)
+
+        # pred zpetnym pruchodem vycistit prip. existujici gradienty z minulych iteraci
+        optimizer.zero_grad()
+
+        # zpetny pruchod, gradienty se ulozi primo do parametru modelu do atributu `grad`
+        loss.backward()
+
+        # update parametru na zaklade atributu `grad`
+        optimizer.step()
+
+        # vyhodnotime presnost
+        _, pred = score.max(dim=1)
+        acc = torch.sum(pred == y_batch).float() / X_batch.shape[0]
+
+        # call
+        if callable(on_batch_end):
+            on_batch_end(X_batch, y_batch, loss, acc)
+        
+        stats.append_batch_stats('train', loss=float(loss), acc=float(acc))
+        pb.set_postfix(
+            loss='{:.3f}'.format(stats.ravg('train', 'loss')),
+            acc='{:.3f}'.format(stats.ravg('train', 'acc'))
+        )
+
+
+def validate_pytorch(model, crit, loader, stats):
+    """
+    Trenovani modelu v PyTorch.
+
+    vstupy:
+        model ... objekt tridy torch.nn.Module
+        crit ... objekt tridy nn.Module, jehoz dopredny pruchod ma za vysledek skalar
+        loader ... objekt tridy torch.utils.data.DataLoader nacistajici data po davkach
+        stats ... objekt typu ans.Stats
+    """
+
+    # prepnout model do testovaciho rezimu
+    model.eval()
+
+    pb = tqdm(loader, desc='epoch {:02d} valid'.format(len(stats)))
+    for X_batch, y_batch in pb:
+        # pokud je model na GPU, data take na GPU
+        device = next(model.parameters()).device
+        X_batch = X_batch.to(device)
+        y_batch = y_batch.to(device)
+
+        # dopredny pruchod
+        score = model(X_batch)
+        
+        # loss
+        loss = crit(score, y_batch)
+
+        # vyhodnotime presnost
+        _, pred = score.max(dim=1)
+        acc = torch.sum(pred == y_batch).float() / X_batch.shape[0]
+        
+        stats.append_batch_stats('valid', loss=float(loss), acc=float(acc))
+        pb.set_postfix(
+            loss='{:.3f}'.format(stats.ravg('valid', 'loss')),
+            acc='{:.3f}'.format(stats.ravg('valid', 'acc'))
+        )
+
+
 def eval_numerical_gradient_tensor(f, x, df, h=None):
     """
     Vypocte numericky gradient funkce `f`.
@@ -352,3 +452,41 @@ def check_gradients(model: Layer, inputs, doutputs, input_names=None, h=None):
         print(f'd{name} error: ', rel_error(grads[name], grads_num[name]))
     
     return grads, grads_num
+
+
+def predict_and_show(rgb, model, transform, classes=None):
+    """
+    vstupy:
+        rgb ... numpy.ndarray formatu vyska x sirka x kanaly a typu np.uint8
+        model ... objekt typu nn.Module
+        transform ... predzpracovani obrazku, ktere provede pred pruchodem siti
+        classes ... seznam trid, bude `None` nebo `list` stejne dlouhy jako pocet vystupnich skore `model`u
+    """
+    # prepnout model do testovaciho rezimu
+    model.eval()
+    
+    # prevod do torch
+    x = transform(rgb)
+    x = x.to(next(model.parameters()).device)
+    x = x[None]
+    
+    # dopredny pruchod
+    score = model(x)
+    prob = F.softmax(score, dim=1)
+    
+    # prevod do numpy
+    score = score.detach().cpu().numpy().squeeze()
+    prob = prob.detach().cpu().numpy().squeeze()
+
+    # tridy
+    if classes is None:
+        classes = [str(i) for i in range(prob.shape[0])]
+    
+    # vykresleni matplotlib
+    plt.figure(figsize=(5, 5))
+    plt.imshow(np.array(rgb))
+    ids = np.argsort(-score)
+    for i, ci in enumerate(ids):
+        plt.gcf().text(1., 0.8 - 0.075 * i, '{}: {:.2f} %'.format(classes[ci], 100. * prob[ci]), fontsize=24)
+    plt.subplots_adjust()
+    plt.show()
