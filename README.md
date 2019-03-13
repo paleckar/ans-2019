@@ -60,3 +60,12 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
   - více filtrů najednou: 3 body
   - konvoluce jako vrstva: 5 bodů
 - **deadline: 6.3.2019 7:59**
+
+### 4. Klasifikace obrázků konvolučními sítěmi
+- Notebook: [conv-classification](conv-classification.ipynb)
+- Bodování:
+  - Validační skóre < 70 %: 0 bodů
+  - Validační skóre > 70 %: 5 bodů
+  - Validační skóre > 80 %: 10 bodů
+  - Validační skóre > 90 %: +5 bodů
+- **deadline: 14.6.2019 7:59**
