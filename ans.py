@@ -486,7 +486,10 @@ def predict_and_show(rgb, model, transform, classes=None):
     plt.figure(figsize=(5, 5))
     plt.imshow(np.array(rgb))
     ids = np.argsort(-score)
-    for i, ci in enumerate(ids):
-        plt.gcf().text(1., 0.8 - 0.075 * i, '{}: {:.2f} %'.format(classes[ci], 100. * prob[ci]), fontsize=24)
+    for i, ci in enumerate(ids[:10]):
+        text = '{:>5.2f} %  {}'.format(100. * prob[ci], classes[ci])
+        if len(text) > 40:
+            text = text[:40] + '...'
+        plt.gcf().text(1., 0.8 - 0.075 * i, text, fontsize=24)
     plt.subplots_adjust()
     plt.show()
