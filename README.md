@@ -88,3 +88,10 @@ Pro akceleraci výpočtů na grafické kartě (výrazně urychlí úlohy s konvo
   - Původní rozlišení, MSE < 1: 3 body
     - Více než 99 % `predict_and_show`: +1 bod
 - **deadline: 14.6.2019 7:59**
+
+### BONUS: Transfer stylu
+- Notebook: [neural-style.ipynb](neural-style.ipynb)
+- Bodování:
+  - Funkční rekonstrukce obsahu: +2 body
+  - Funkční rekonstrukce stylu: +3 body
+  - Funkční přenos stylu: +5 bodů

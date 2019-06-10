@@ -178,7 +178,7 @@ class Stats(object):
         if ylabels is not None:
             ax.legend()
         
-    def plot_by_batch(self, ax=None, subset='train', left_metric='loss', right_metric='acc', block_len=None):
+    def plot_by_batch(self, ax=None, subset='train', left_metric='loss', right_metric='acc', block_len=1):
         if ax is None:
             fig, ax = plt.subplots()
         
